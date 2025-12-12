@@ -2,6 +2,7 @@ import React from "react";
 import Header from "./components/Header";
 import ExchangeCard from "./components/ExchangeCard";
 import HistoryTable from "./components/HistoryTable";
+import ExchangeChart from "./components/ExchangeChart";
 import "./App.css";
 
 function App() {
@@ -13,9 +14,12 @@ function App() {
           <ExchangeCard />
         </div>
         <div className="right-panel">
-          <HistoryTable />
+          <ExchangeChart />
         </div>
       </main>
+      <div className="full-width-section">
+        <HistoryTable />
+      </div>
     </div>
   );
 }
