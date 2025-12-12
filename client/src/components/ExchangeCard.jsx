@@ -64,7 +64,6 @@ const ExchangeCard = () => {
 
       <div className="conversion-row">
         <div className="currency-box">
-          <span className="flag">🇯🇵</span>
           <span className="code">JPY</span>
         </div>
 
@@ -78,7 +77,7 @@ const ExchangeCard = () => {
           >
             {TARGETS.map((t) => (
               <option key={t.code} value={t.code}>
-                {t.flag} {t.code} - {t.name}
+                {t.code} - {t.name}
               </option>
             ))}
           </select>
@@ -101,7 +100,7 @@ const ExchangeCard = () => {
         onClick={handleSave}
         disabled={loading || isSaving}
       >
-        <FaSave /> {isSaving ? "Saved!" : "Save to History"}
+        <FaSave /> {isSaving ? "Saved!" : "Save Rate"}
       </button>
     </div>
   );

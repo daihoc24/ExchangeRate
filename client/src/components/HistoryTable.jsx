@@ -38,22 +38,22 @@ const HistoryTable = () => {
         <table className="styled-table">
           <thead>
             <tr>
-              <th>Pair</th>
-              <th>Exchange Rate</th>
               <th>
-                <FaClock /> Time
+                <FaClock /> Time Saved
               </th>
+              <th>Currency</th>
+              <th>Exchange Rate</th>
             </tr>
           </thead>
           <tbody>
             {history.map((item, index) => (
               <tr key={item._id} className={index === 0 ? "new-row" : ""}>
+                <td className="time-cell">
+                  {moment(item.timestamp).fromNow()}
+                </td>
                 <td className="pair-cell">{item.pair}</td>
                 <td className="rate-cell">
                   {new Intl.NumberFormat().format(item.rate)}
-                </td>
-                <td className="time-cell">
-                  {moment(item.timestamp).fromNow()}
                 </td>
               </tr>
             ))}
