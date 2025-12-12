@@ -8,18 +8,15 @@ const HistoryTable = () => {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    // 1. Load dữ liệu ban đầu
     axios
       .get("http://localhost:5000/api/history")
       .then((res) => setHistory(res.data))
       .catch((err) => console.error(err));
 
-    // 2. Lắng nghe sự kiện realtime
     socket.on("new-record", (newRecord) => {
       setHistory((prev) => [newRecord, ...prev]);
     });
 
-    // Cleanup khi component unmount
     return () => {
       socket.off("new-record");
     };
