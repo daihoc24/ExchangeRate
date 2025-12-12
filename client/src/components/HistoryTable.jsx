@@ -1,27 +1,49 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import moment from "moment";
-import socket from "../services/socket"; // Import socket singleton
+import socketService from "../services/socket"; // Import socket service
 import { FaHistory, FaClock } from "react-icons/fa";
 
 const HistoryTable = () => {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    // 1. Load dữ liệu ban đầu
-    axios
-      .get("http://localhost:5000/api/history")
-      .then((res) => setHistory(res.data))
-      .catch((err) => console.error(err));
+    // Function to load history
+    const loadHistory = () => {
+      axios
+        .get("https://945346be86a0.ngrok-free.app/api/exchange/history")
+        .then((res) => {
+          if (res.data && Array.isArray(res.data)) {
+            setHistory(res.data);
+          } else {
+            setHistory([]);
+          }
+        })
+        .catch((err) => {
+          console.error("Error loading history:", err);
+          setHistory([]);
+        });
+    };
 
-    // 2. Lắng nghe sự kiện realtime
-    socket.on("new-record", (newRecord) => {
+    // 1. Load dữ liệu ban đầu
+    loadHistory();
+
+    // 2. Lắng nghe custom event từ ExchangeCard
+    const handleRefreshHistory = () => {
+      loadHistory();
+    };
+    window.addEventListener('refresh-history', handleRefreshHistory);
+
+    // 3. Lắng nghe sự kiện realtime qua WebSocket
+    const handleNewRecord = (newRecord) => {
       setHistory((prev) => [newRecord, ...prev]);
-    });
+    };
+
+    socketService.onNewRecord(handleNewRecord);
 
     // Cleanup khi component unmount
     return () => {
-      socket.off("new-record");
+      window.removeEventListener('refresh-history', handleRefreshHistory);
+      socketService.removeListener(handleNewRecord);
     };
   }, []);
 
@@ -47,11 +69,11 @@ const HistoryTable = () => {
           </thead>
           <tbody>
             {history.map((item, index) => (
-              <tr key={item._id} className={index === 0 ? "new-row" : ""}>
+              <tr key={item.id} className={index === 0 ? "new-row" : ""}>
                 <td className="time-cell">
-                  {moment(item.timestamp).fromNow()}
+                  {item.savedAt}
                 </td>
-                <td className="pair-cell">{item.pair}</td>
+                <td className="pair-cell">JPY → {item.targetCurrency}</td>
                 <td className="rate-cell">
                   {new Intl.NumberFormat().format(item.rate)}
                 </td>

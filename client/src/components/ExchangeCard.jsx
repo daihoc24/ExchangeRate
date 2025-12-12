@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FaSave, FaSyncAlt, FaArrowRight, FaExchangeAlt } from "react-icons/fa";
 
-const TARGETS = [
+export const TARGETS = [
   { code: "VND", flag: "🇻🇳", name: "Vietnam Dong" },
   { code: "USD", flag: "🇺🇸", name: "US Dollar" },
   { code: "PHP", flag: "🇵🇭", name: "Philippine Peso" },
@@ -17,48 +17,56 @@ const ExchangeCard = () => {
   const [amount, setAmount] = useState(1000);
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const fetchRate = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(
-        `https://api.exchangerate-api.com/v4/latest/JPY`
-      );
-      const currentRate = res.data.rates[selectedCurrency];
-      setRate(currentRate);
-    } catch (error) {
-      console.error("Error fetching rate", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
+    const fetchRate = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `https://945346be86a0.ngrok-free.app/api/exchange/rate?target=${selectedCurrency}`
+        );
+        setRate(res.data.rate);
+      } catch (error) {
+        console.error("Error fetching rate", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchRate();
-  }, [selectedCurrency]);
+  }, [selectedCurrency, refreshTrigger]);
+
+  const handleRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   const handleAmountChange = (e) => {
     const val = e.target.value;
     if (val === "" || val >= 0) {
       setAmount(val);
     }
-  };
-
+  }
   const handleSave = async () => {
-    // if (!rate) return;
-    // setIsSaving(true);
-    // try {
-    //   // Gọi API save, Socket bên server sẽ tự bắn event update cho HistoryTable
-    //   await axios.post("http://localhost:5000/api/save", {
-    //     pair: `JPY -> ${selectedCurrency}`,
-    //     rate: rate,
-    //   });
-    //   // Giả lập delay 1 xíu cho mượt
-    //   setTimeout(() => setIsSaving(false), 500);
-    // } catch (error) {
-    //   console.error("Save failed", error);
-    //   setIsSaving(false);
-    // }
+    if (!rate) return;
+    setIsSaving(true);
+    try {
+      // Gọi API save, Socket bên server sẽ tự bắn event update cho HistoryTable
+      const response = await axios.post("https://945346be86a0.ngrok-free.app/api/exchange/save", {
+        target: selectedCurrency,
+        rate: rate,
+      });
+
+      // Trigger custom event để HistoryTable reload
+      window.dispatchEvent(new CustomEvent('refresh-history', {
+        detail: response.data
+      }));
+
+      setTimeout(() => setIsSaving(false), 500);
+    } catch (error) {
+      console.error("Save failed", error);
+      setIsSaving(false);
+    }
   };
 
   // Tính toán kết quả
@@ -78,7 +86,7 @@ const ExchangeCard = () => {
         <h3>Converter</h3>
         <div
           className="live-status-btn"
-          onClick={fetchRate}
+          onClick={handleRefresh}
           title="Click to update rate"
         >
           <span className={`status-dot ${loading ? "pulsing" : ""}`}>●</span>
